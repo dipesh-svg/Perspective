@@ -83,6 +83,26 @@ All new functionality, in the frontend and the backend, must include tests in th
 | Frontend | `frontend/tests/` | `npm test` in `frontend/` (`npm run test:coverage` for the CI coverage check) | [Vitest](https://vitest.dev) |
 | Backend | `backend/tests/` | `uv run pytest` in `backend/` (`uv run pytest --cov` for the CI coverage check) | [pytest](https://docs.pytest.org) |
 
+### Frontend browser E2E tests
+
+The Cypress suite runs against the local Next.js frontend and intercepts the analysis API requests, so the covered browser flows do not need a live backend or API keys.
+
+Start the frontend in one terminal:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Then run the browser tests in another terminal:
+
+```bash
+cd frontend
+npm run test:e2e
+```
+
+Use `npm run test:e2e:open` to open Cypress interactively. The CI workflow starts the dev server before running the same headless suite.
+
 - **Coverage is measured on the whole code base** and must stay at or above 90% (lines, branches, functions and statements) in both parts. A new page, component, hook or module is counted automatically, so it needs its own tests.
 - **Frontend:** coverage includes everything under `app/`, `components/`, `hooks/`, `config/`, `i18n/` and `lib/`. The only exclusions are type declarations and shadcn/ui primitives that nothing imports, listed with their reasons in [`frontend/vitest.config.mts`](frontend/vitest.config.mts); when you start using one of those primitives, remove it from the list and test it. Render components with React Testing Library inside the real message catalogs (`renderWithIntl` in [`frontend/tests/helpers/intl.tsx`](frontend/tests/helpers/intl.tsx)), assert what the reader sees and can do, and mock only what jsdom cannot do (shared mocks are in [`frontend/tests/setup.ts`](frontend/tests/setup.ts)). Prefer [fast-check](https://fast-check.dev) property tests where the input space is large.
 - **Backend:** tests must not need API keys or network access. [`backend/tests/conftest.py`](backend/tests/conftest.py) sets placeholder API keys, fakes Pinecone, the embedding model and NLTK downloads, and blocks DNS lookups and outbound connections; use its fixtures (`fake_chat_client` for Groq, `fake_index` for Pinecone, `resolve_hosts` for DNS) and `monkeypatch` for other external calls. Coverage covers `app/` and `main.py` (`[tool.coverage.*]` in [`backend/pyproject.toml`](backend/pyproject.toml)); use [Hypothesis](https://hypothesis.readthedocs.io) property tests where the input space is large.
